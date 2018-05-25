@@ -13,7 +13,7 @@ Follow the steps above:
 
 ### Create an use case to create a new order
 1. Inputs: customer (customer_id), product list (product_id, quantity)
-1. Outputs: success (when everythins is ok), error (when customer or product doesn't exists)
+1. Outputs: success (when everythins is ok returns order_id and total price), error (when customer or product doesn't exists)
 1. Implement customer gateway database
 1. Implement product gateway database
 1. Implement order gateway database
@@ -21,11 +21,11 @@ Follow the steps above:
 
 ### Create an use case to show all orders by customer
 1. Inputs: customer (customer_id)
-1. Outputs: success (when everythins is ok), error (when customer doesn't exists)
+1. Outputs: success (when everythins is ok returns a list of orders with order_id, products and total price), error (when customer doesn't exists)
+1. Extract business logic to an order entity
 1. Implement order gateway database
 1. Implement show orders presenter to response in JSON
 
 ### Evolving the project
 1. Create show orders presenter to response in CSV
 1. Create show orders gateway to consume an API REST
-1. Increment requeriments to use case
