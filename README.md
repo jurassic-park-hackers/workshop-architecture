@@ -26,6 +26,11 @@ Follow the steps above:
 1. Implement order gateway database
 1. Implement show orders presenter to response in JSON
 
+### Delivery mechanism
+1. Create a order controller
+
 ### Evolving the project
 1. Create show orders presenter to response in CSV
 1. Create show orders gateway to consume an API REST
+
+
