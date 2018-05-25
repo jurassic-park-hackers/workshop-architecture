@@ -1,10 +1,10 @@
 # workshop-architecture
 
 ## Stack
-[Ruby](https://www.ruby-lang.org/en/)
-[Ruby on Rails](https://rubyonrails.org/)
-[RSpec](http://rspec.info/)
-[Postgres](https://www.postgresql.org/)
+- [Ruby](https://www.ruby-lang.org/en/)
+- [Ruby on Rails](https://rubyonrails.org/)
+- [RSpec](http://rspec.info/)
+- [Postgres](https://www.postgresql.org/)
 
 ## Goal
 Demonstrate how to start a project following good principles of architecture.
