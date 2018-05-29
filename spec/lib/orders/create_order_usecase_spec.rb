@@ -1,102 +1,8 @@
-class CreateOrderUsecase
-  def initialize(customer_gateway, product_gateway, order_gateway, create_order_presenter)
-    @customer_gateway = customer_gateway
-    @product_gateway = product_gateway
-    @order_gateway = order_gateway
-    @presenter = create_order_presenter
-  end
-
-  def execute(customer_id, products_id_with_quantity)
-    return if not customer_exists?(customer_id)
-
-    products, has_error = find_products(products_id_with_quantity)
-    return if has_error
-
-    order_products = get_order_products(products, products_id_with_quantity)
-    total_price = get_total_price(order_products)
-
-    order_id = @order_gateway.save_order(customer_id, order_products)
-    @presenter.show_order(order_id, total_price.round(2))
-  end
-
-  private
-
-  def customer_exists?(customer_id)
-    if not @customer_gateway.customer_exists?(customer_id)
-      @presenter.show_error_customer_not_found
-      return false
-    end
-
-    return true
-  end
-
-  def find_products(products_id_with_quantity)
-    begin
-      products_ids = products_id_with_quantity.map { |p| p[:product_id] }
-      return @product_gateway.find_products_by_ids(products_ids), false
-    rescue ProductsNotFoundException => ex
-      for product_id in ex.products_ids
-        @presenter.show_error_product_not_found(product_id)
-      end
-
-      return [], true
-    end
-  end
-
-  def get_order_products(products, products_id_with_quantity)
-    order_products = []
-
-    for product in products
-      quantity = products_id_with_quantity.select { |p| p[:product_id] == product.product_id }[0][:quantity]
-      order_products += [OrderProductStruct.new(product.product_id, quantity, product.price)]
-    end
-
-    return order_products
-  end
-
-  def get_total_price(order_products)
-    total_price = 0
-
-    for order_product in order_products
-      total_price += order_product.price * order_product.quantity
-    end
-
-    return total_price
-  end
-end
-
-class CustomerGateway
-  def customer_exists?(customer_id); end
-end
-
-class ProductGateway
-  def find_products_by_ids(products_ids); end
-end
-
-class OrderGateway
-  def save_order(customer_id, order_products); end
-end
-
-class CreateOrderPresenter
-  def show_error_customer_not_found; end
-
-  def show_error_product_not_found(product_id); end
-
-  def show_order(order_id, total_price); end
-end
-
-ProductStruct = Struct.new(:product_id, :name, :price)
-
-OrderProductStruct = Struct.new(:product_id, :quantity, :price)
-
-class ProductsNotFoundException < StandardError
-  attr_reader :products_ids
-
-  def initialize(products_ids)
-    @products_ids = products_ids
-    super
-  end
-end
+require './lib/orders/create_order_usecase'
+require './lib/products/gateways'
+require './lib/orders/gateways'
+require './lib/orders/presenters'
+require './lib/customers/gateways'
 
 RSpec.describe CreateOrderUsecase do
   let(:customer_gateway) { instance_double(CustomerGateway) }
@@ -137,7 +43,7 @@ RSpec.describe CreateOrderUsecase do
         allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
         allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_raise(ProductsNotFoundException.new([555]))
       end
-      
+
       it 'present product not found' do
         expect(presenter).to receive(:show_error_product_not_found).with(555)
 
@@ -184,6 +90,5 @@ RSpec.describe CreateOrderUsecase do
 
       usecase.execute(customer_id, products)
     end
-
   end
 end
