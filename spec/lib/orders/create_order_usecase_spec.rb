@@ -7,34 +7,61 @@ class CreateOrderUsecase
   end
 
   def execute(customer_id, products_id_with_quantity)
+    return if not customer_exists?(customer_id)
+
+    products, has_error = find_products(products_id_with_quantity)
+    return if has_error
+
+    order_products = get_order_products(products, products_id_with_quantity)
+    total_price = get_total_price(order_products)
+
+    order_id = @order_gateway.save_order(customer_id, order_products)
+    @presenter.show_order(order_id, total_price.round(2))
+  end
+
+  private
+
+  def customer_exists?(customer_id)
     if not @customer_gateway.customer_exists?(customer_id)
       @presenter.show_error_customer_not_found
-      return
+      return false
     end
-    
+
+    return true
+  end
+
+  def find_products(products_id_with_quantity)
     begin
       products_ids = products_id_with_quantity.map { |p| p[:product_id] }
-      products = @product_gateway.find_products_by_ids(products_ids)
+      return @product_gateway.find_products_by_ids(products_ids), false
     rescue ProductsNotFoundException => ex
       for product_id in ex.products_ids
         @presenter.show_error_product_not_found(product_id)
       end
-      return
-    end
 
+      return [], true
+    end
+  end
+
+  def get_order_products(products, products_id_with_quantity)
     order_products = []
-    total_price = 0
 
     for product in products
       quantity = products_id_with_quantity.select { |p| p[:product_id] == product.product_id }[0][:quantity]
-
       order_products += [OrderProductStruct.new(product.product_id, quantity, product.price)]
-
-      total_price += product.price * quantity
     end
 
-    order_id = @order_gateway.save_order(customer_id, order_products)
-    @presenter.show_order(order_id, total_price.round(2))
+    return order_products
+  end
+
+  def get_total_price(order_products)
+    total_price = 0
+
+    for order_product in order_products
+      total_price += order_product.price * order_product.quantity
+    end
+
+    return total_price
   end
 end
 
