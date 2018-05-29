@@ -11,19 +11,26 @@ class CreateOrderUsecase
       @presenter.show_error_customer_not_found
       return
     end
+    
+    begin
+      products_ids = products_id_with_quantity.map { |p| p[:product_id] }
+      products = @product_gateway.find_products_by_ids(products_ids)
+    rescue ProductsNotFoundException => ex
+      for product_id in ex.products_ids
+        @presenter.show_error_product_not_found(product_id)
+      end
+      return
+    end
 
     order_products = []
     total_price = 0
 
-    for product_id_with_quantity in products_id_with_quantity
-      begin
-        product = @product_gateway.find_product_by_id(product_id_with_quantity[:product_id])
-        order_products += [OrderProductStruct.new(product.product_id, product_id_with_quantity[:quantity], product.price)]
-        total_price += product.price * product_id_with_quantity[:quantity]
-      rescue ProductNotFoundException
-        @presenter.show_error_product_not_found(product_id_with_quantity[:product_id])
-        return
-      end
+    for product in products
+      quantity = products_id_with_quantity.select { |p| p[:product_id] == product.product_id }[0][:quantity]
+
+      order_products += [OrderProductStruct.new(product.product_id, quantity, product.price)]
+
+      total_price += product.price * quantity
     end
 
     order_id = @order_gateway.save_order(customer_id, order_products)
@@ -36,7 +43,7 @@ class CustomerGateway
 end
 
 class ProductGateway
-  def find_product_by_id(product_id); end
+  def find_products_by_ids(products_ids); end
 end
 
 class OrderGateway
@@ -55,7 +62,14 @@ ProductStruct = Struct.new(:product_id, :name, :price)
 
 OrderProductStruct = Struct.new(:product_id, :quantity, :price)
 
-class ProductNotFoundException < StandardError; end
+class ProductsNotFoundException < StandardError
+  attr_reader :products_ids
+
+  def initialize(products_ids)
+    @products_ids = products_ids
+    super
+  end
+end
 
 RSpec.describe CreateOrderUsecase do
   let(:customer_gateway) { instance_double(CustomerGateway) }
@@ -93,7 +107,7 @@ RSpec.describe CreateOrderUsecase do
         customer_id = 1
         products = [{ product_id: 555, quantity: 1 }]
         allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-        allow(product_gateway).to receive(:find_product_by_id).with(555).and_raise(ProductNotFoundException)
+        allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_raise(ProductsNotFoundException.new([555]))
 
         expect(presenter).to receive(:show_error_product_not_found).with(555)
 
@@ -104,7 +118,7 @@ RSpec.describe CreateOrderUsecase do
         customer_id = 1
         products = [{ product_id: 555, quantity: 1 }]
         allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-        allow(product_gateway).to receive(:find_product_by_id).with(555).and_raise(ProductNotFoundException)
+        allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_raise(ProductsNotFoundException.new([555]))
         allow(presenter).to receive(:show_error_product_not_found)
 
         expect(order_gateway).to_not receive(:save_order)
@@ -120,7 +134,7 @@ RSpec.describe CreateOrderUsecase do
       products = [{ product_id: 555, quantity: 2 }]
       product = ProductStruct.new(555, 'product', 10.0)
       allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_product_by_id).with(555).and_return(product)
+      allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_return([product])
       allow(presenter).to receive(:show_order)
 
       order_product = OrderProductStruct.new(product_id=product.product_id, quantity=2, price=product.price)
@@ -135,8 +149,7 @@ RSpec.describe CreateOrderUsecase do
       product_one = ProductStruct.new(555, 'product_one', 10.0)
       product_two = ProductStruct.new(666, 'product_two' ,8.4)
       allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_product_by_id).with(555).and_return(product_one)
-      allow(product_gateway).to receive(:find_product_by_id).with(666).and_return(product_two)
+      allow(product_gateway).to receive(:find_products_by_ids).with([555, 666]).and_return([product_one, product_two])
       allow(presenter).to receive(:show_order)
 
       order_product_one = OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price)
@@ -152,8 +165,7 @@ RSpec.describe CreateOrderUsecase do
       product_one = ProductStruct.new(555, 'product_one', 10.0)
       product_two = ProductStruct.new(666, 'product_two' ,8.4)
       allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_product_by_id).with(555).and_return(product_one)
-      allow(product_gateway).to receive(:find_product_by_id).with(666).and_return(product_two)
+      allow(product_gateway).to receive(:find_products_by_ids).with([555, 666]).and_return([product_one, product_two])
 
       order_product_one = OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price)
       order_product_two = OrderProductStruct.new(product_id=product_two.product_id, quantity=7, price=product_two.price)
