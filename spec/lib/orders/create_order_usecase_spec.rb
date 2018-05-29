@@ -12,19 +12,19 @@ class CreateOrderUsecase
       return
     end
 
-    order_product = nil
+    order_products = []
 
     for product_id_with_quantity in products_id_with_quantity
       begin
         product = @product_gateway.find_product_by_id(product_id_with_quantity[:product_id])
-        order_product = OrderProductStruct.new(product.product_id, product_id_with_quantity[:quantity], product.price)
+        order_products += [OrderProductStruct.new(product.product_id, product_id_with_quantity[:quantity], product.price)]
       rescue ProductNotFoundException
         @presenter.show_error_product_not_found(product_id_with_quantity[:product_id])
         return
       end
     end
 
-    @order_gateway.save_order(customer_id, [order_product])
+    @order_gateway.save_order(customer_id, order_products)
   end
 end
 
@@ -116,7 +116,7 @@ RSpec.describe CreateOrderUsecase do
   end
 
   context 'success' do
-    it 'save order to customer with products' do
+    it 'save order to customer with one product' do
       customer_id = 1
       products = [{ product_id: 555, quantity: 2 }]
       product = ProductStruct.new(product_id=555, price=10.0)
@@ -125,6 +125,22 @@ RSpec.describe CreateOrderUsecase do
 
       order_product = OrderProductStruct.new(product_id=product.product_id, quantity=2, price=product.price)
       expect(order_gateway).to receive(:save_order).with(customer_id, [order_product])
+
+      usecase.execute(customer_id, products)
+    end
+
+    it 'save order to customer with two products' do
+      customer_id = 1
+      products = [{ product_id: 555, quantity: 2 }, { product_id: 666, quantity: 7 }]
+      product_one = ProductStruct.new(product_id=555, price=10.0)
+      product_two = ProductStruct.new(product_id=666, price=8.4)
+      allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
+      allow(product_gateway).to receive(:find_product_by_id).with(555).and_return(product_one)
+      allow(product_gateway).to receive(:find_product_by_id).with(666).and_return(product_two)
+
+      order_product_one = OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price)
+      order_product_two = OrderProductStruct.new(product_id=product_two.product_id, quantity=7, price=product_two.price)
+      expect(order_gateway).to receive(:save_order).with(customer_id, [order_product_one, order_product_two])
 
       usecase.execute(customer_id, products)
     end
