@@ -107,20 +107,20 @@ RSpec.describe CreateOrderUsecase do
   
   context 'when an errors occurs' do
     context 'customer not found' do 
-      it 'present customer not found' do
-        customer_id = 999
-        products = []
-        allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(false)
+      let(:customer_id) { 999 }
+      let(:products) { [] }
 
+      before do
+        allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(false)
+      end
+
+      it 'present customer not found' do
         expect(presenter).to receive(:show_error_customer_not_found)
 
         usecase.execute(customer_id, products)
       end
 
       it 'does not saves order' do
-        customer_id = 999
-        products = []
-        allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(false)
         allow(presenter).to receive(:show_error_customer_not_found)
 
         expect(order_gateway).to_not receive(:save_order)
@@ -130,22 +130,21 @@ RSpec.describe CreateOrderUsecase do
     end
 
     context 'product not found' do
-      it 'present product not found' do
-        customer_id = 1
-        products = [{ product_id: 555, quantity: 1 }]
+      let(:customer_id) { 1 }
+      let(:products) { [{ product_id: 555, quantity: 1 }] }
+
+      before do
         allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
         allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_raise(ProductsNotFoundException.new([555]))
-
+      end
+      
+      it 'present product not found' do
         expect(presenter).to receive(:show_error_product_not_found).with(555)
 
         usecase.execute(customer_id, products)
       end
 
       it 'does not saves order' do
-        customer_id = 1
-        products = [{ product_id: 555, quantity: 1 }]
-        allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-        allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_raise(ProductsNotFoundException.new([555]))
         allow(presenter).to receive(:show_error_product_not_found)
 
         expect(order_gateway).to_not receive(:save_order)
@@ -156,46 +155,27 @@ RSpec.describe CreateOrderUsecase do
   end
 
   context 'success' do
-    it 'save order to customer with one product' do
-      customer_id = 1
-      products = [{ product_id: 555, quantity: 2 }]
-      product = ProductStruct.new(555, 'product', 10.0)
+    let(:customer_id) { 1 }
+    let(:products) { [{ product_id: 555, quantity: 2 }, { product_id: 666, quantity: 7 }] }
+    let(:product_one) { ProductStruct.new(555, 'product_one', 10.0) }
+    let(:product_two) { ProductStruct.new(666, 'product_two' ,8.4) }
+    let(:order_product_one) { OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price) }
+    let(:order_product_two) { OrderProductStruct.new(product_id=product_two.product_id, quantity=7, price=product_two.price) }
+
+    before do
       allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_products_by_ids).with([555]).and_return([product])
-      allow(presenter).to receive(:show_order)
-
-      order_product = OrderProductStruct.new(product_id=product.product_id, quantity=2, price=product.price)
-      expect(order_gateway).to receive(:save_order).with(customer_id, [order_product])
-
-      usecase.execute(customer_id, products)
+      allow(product_gateway).to receive(:find_products_by_ids).with([555, 666]).and_return([product_one, product_two])
     end
 
     it 'save order to customer with two products' do
-      customer_id = 1
-      products = [{ product_id: 555, quantity: 2 }, { product_id: 666, quantity: 7 }]
-      product_one = ProductStruct.new(555, 'product_one', 10.0)
-      product_two = ProductStruct.new(666, 'product_two' ,8.4)
-      allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_products_by_ids).with([555, 666]).and_return([product_one, product_two])
       allow(presenter).to receive(:show_order)
 
-      order_product_one = OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price)
-      order_product_two = OrderProductStruct.new(product_id=product_two.product_id, quantity=7, price=product_two.price)
       expect(order_gateway).to receive(:save_order).with(customer_id, [order_product_one, order_product_two])
 
       usecase.execute(customer_id, products)
     end
 
     it 'present success with order_id and total_price' do
-      customer_id = 1
-      products = [{ product_id: 555, quantity: 2 }, { product_id: 666, quantity: 7 }]
-      product_one = ProductStruct.new(555, 'product_one', 10.0)
-      product_two = ProductStruct.new(666, 'product_two' ,8.4)
-      allow(customer_gateway).to receive(:customer_exists?).with(customer_id).and_return(true)
-      allow(product_gateway).to receive(:find_products_by_ids).with([555, 666]).and_return([product_one, product_two])
-
-      order_product_one = OrderProductStruct.new(product_id=product_one.product_id, quantity=2, price=product_one.price)
-      order_product_two = OrderProductStruct.new(product_id=product_two.product_id, quantity=7, price=product_two.price)
       order_id = 22
       allow(order_gateway).to receive(:save_order).and_return(order_id)
 
