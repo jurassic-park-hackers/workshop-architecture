@@ -20,14 +20,17 @@ ActiveRecord::Schema.define(version: 20180525201004) do
   end
 
   create_table "order_products", force: :cascade do |t|
-    t.string  "product"
-    t.string  "order"
+    t.integer "product_id"
+    t.integer "order_id"
     t.integer "quantity"
+    t.index ["order_id"], name: "index_order_products_on_order_id", using: :btree
+    t.index ["product_id"], name: "index_order_products_on_product_id", using: :btree
   end
 
   create_table "orders", force: :cascade do |t|
-    t.string  "customer"
+    t.integer "customer_id"
     t.decimal "total_price", precision: 10, scale: 2
+    t.index ["customer_id"], name: "index_orders_on_customer_id", using: :btree
   end
 
   create_table "products", force: :cascade do |t|
