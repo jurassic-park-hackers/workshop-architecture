@@ -13,7 +13,7 @@ Follow the steps above:
 
 ### Create an use case to create a new order
 1. Inputs: customer (customer_id), product list (product_id, quantity)
-1. Outputs: success (when everythings is ok returns order_id and total price), error (when customer or product doesn't exists)
+1. Outputs: success (when everythings is ok returns order_id and total_price), error (when customer or product doesn't exists)
 1. Implement customer gateway database
 1. Implement product gateway database
 1. Implement order gateway database
