@@ -14,7 +14,7 @@ RSpec.describe CreateOrderPresenterJson do
       it 'response should be empty' do
         response = presenter.response
 
-        expect(response[:data]).to eq({})
+        expect(response[:json]).to eq({})
       end
     end
 
@@ -32,7 +32,7 @@ RSpec.describe CreateOrderPresenterJson do
       it 'response with customer not found error' do
         response = presenter.response
 
-        expect(response[:data]).to eq({:errors => ['Customer not found.']})
+        expect(response[:json]).to eq({:errors => ['Customer not found.']})
       end
     end
 
@@ -50,7 +50,7 @@ RSpec.describe CreateOrderPresenterJson do
 
         response = presenter.response
 
-        expect(response[:data]).to eq({:errors => ['Product not found: 123']})
+        expect(response[:json]).to eq({:errors => ['Product not found: 123']})
       end
 
       it 'response products with error when two products presented with error' do
@@ -59,7 +59,7 @@ RSpec.describe CreateOrderPresenterJson do
 
         response = presenter.response
 
-        expect(response[:data]).to eq({:errors => ['Product not found: 123', 'Product not found: 478']})
+        expect(response[:json]).to eq({:errors => ['Product not found: 123', 'Product not found: 478']})
       end
     end
 
@@ -80,7 +80,7 @@ RSpec.describe CreateOrderPresenterJson do
       it 'response with order id and total_price' do
         response = presenter.response
 
-        expect(response[:data]).to eq({:order_id => order_id, :total_price => total_price})
+        expect(response[:json]).to eq({:order_id => order_id, :total_price => total_price})
       end
     end
   end

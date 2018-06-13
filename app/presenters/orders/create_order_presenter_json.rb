@@ -26,23 +26,23 @@ class CreateOrderPresenterJson < CreateOrderPresenter
   def response
     {
       'status': @status,
-      'data': create_data_response
+      'json': create_json_response
     }
   end
 
   private
   
-  def create_data_response
+  def create_json_response
     if @errors.empty?
       if @order[:order_id].nil?
-        data = {}
+        json = {}
       else
-        data = @order
+        json = @order
       end
     else
-      data = {:errors => @errors}
+      json = {:errors => @errors}
     end
 
-    data
+    json
   end
 end
