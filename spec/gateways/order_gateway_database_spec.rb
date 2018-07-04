@@ -38,4 +38,44 @@ RSpec.describe OrderGatewayDatabase do
       expect(order_products[1].price).to eq(order_products[1].price)
     end
   end
+
+  describe '#get_orders_by_customer_id' do
+    it 'filter by customer by id' do
+      Order.create(customer_id: customer.id)
+
+      expect(gateway.get_orders_by_customer_id(999)).to eq([])
+    end
+
+    context 'when customer has not orders' do
+      it 'returns empty list' do
+        expect(gateway.get_orders_by_customer_id(customer.id)).to eq([])
+      end
+    end
+
+    context 'when customer has at least one order' do
+      it 'returns orders' do
+        order = Order.create(customer_id: customer.id)
+        order_products = [
+          OrderProduct.create(order_id: order.id, product_id: product_one.id, quantity: 1, price: 10.0),
+          OrderProduct.create(order_id: order.id, product_id: product_two.id, quantity: 2, price: 15.0),
+        ]
+
+        orders = gateway.get_orders_by_customer_id(customer.id)
+
+        expect(orders.length).to eq(1)
+        expect(orders[0].order_products.length).to eq(2)
+
+        expect(orders[0].customer_id).to eq(customer.id)
+
+        expect(orders[0].order_products[0].product_id).to eq(order_products[0].product_id)
+        expect(orders[0].order_products[0].quantity).to eq(order_products[0].quantity)
+        expect(orders[0].order_products[0].price).to eq(order_products[0].price)
+
+        expect(orders[0].order_products[1].product_id).to eq(order_products[1].product_id)
+        expect(orders[0].order_products[1].quantity).to eq(order_products[1].quantity)
+        expect(orders[0].order_products[1].price).to eq(order_products[1].price)
+      end
+    end
+  end
+
 end

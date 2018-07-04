@@ -15,4 +15,8 @@ class OrderGatewayDatabase < OrderGateway
 
     return order.id
   end
+
+  def get_orders_by_customer_id(customer_id)
+    return Order.where(customer_id: customer_id)
+  end
 end
