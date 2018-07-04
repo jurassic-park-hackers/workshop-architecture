@@ -1,5 +1,6 @@
 require './lib/customers/gateways'
 require './lib/orders/structs'
+require './lib/orders/order_entity'
 
 class ShowOrdersByCustomerUsecase
 	def initialize(customer_gateway, order_gateway, show_orders_by_customer_presenter)
@@ -17,7 +18,7 @@ class ShowOrdersByCustomerUsecase
     orders = @order_gateway.get_orders_by_customer_id(customer_id)
     response = ShowOrdersByCustomerResponse.new([])
     for order in orders
-      total_price = get_total_price(order.order_products)
+      total_price = OrderEntity.get_total_price(order.order_products)
       response.orders_response += [
         OrderResponse.new(order.order_id, order.customer_id, total_price, order.order_products)
       ]
@@ -25,18 +26,6 @@ class ShowOrdersByCustomerUsecase
 
     @presenter.show_orders(response)
 	end
-
-  private
-
-  def get_total_price(order_products)
-    total_price = 0
-
-    for order_product in order_products
-      total_price += order_product.price * order_product.quantity
-    end
-
-    return total_price
-  end
 end
 
 class ShowOrdersByCustomerPresenter

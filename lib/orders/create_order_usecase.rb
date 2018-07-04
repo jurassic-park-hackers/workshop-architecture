@@ -1,5 +1,6 @@
 require './lib/orders/structs'
 require './lib/products/exceptions'
+require './lib/orders/order_entity'
 
 class CreateOrderUsecase
   def initialize(customer_gateway, product_gateway, order_gateway, create_order_presenter)
@@ -16,7 +17,7 @@ class CreateOrderUsecase
     return if has_error
 
     order_products = get_order_products(products, products_id_with_quantity)
-    total_price = get_total_price(order_products)
+    total_price = OrderEntity.get_total_price(order_products)
 
     order_id = @order_gateway.save_order(customer_id, order_products)
     @presenter.show_order(order_id, total_price.round(2))
@@ -55,15 +56,5 @@ class CreateOrderUsecase
     end
 
     return order_products
-  end
-
-  def get_total_price(order_products)
-    total_price = 0
-
-    for order_product in order_products
-      total_price += order_product.price * order_product.quantity
-    end
-
-    return total_price
   end
 end
