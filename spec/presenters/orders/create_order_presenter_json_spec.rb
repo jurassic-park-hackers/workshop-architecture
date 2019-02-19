@@ -1,5 +1,3 @@
-# require './app/presenters/orders/create_order_presenter_json'
-
 RSpec.describe Orders::CreateOrderPresenterJson do
   let(:presenter) { described_class.new() }
 
