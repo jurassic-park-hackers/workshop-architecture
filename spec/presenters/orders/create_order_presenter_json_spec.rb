@@ -1,6 +1,6 @@
-require './app/presenters/orders/create_order_presenter_json'
+# require './app/presenters/orders/create_order_presenter_json'
 
-RSpec.describe CreateOrderPresenterJson do
+RSpec.describe Orders::CreateOrderPresenterJson do
   let(:presenter) { described_class.new() }
 
   describe '#respond' do
