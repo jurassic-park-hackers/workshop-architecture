@@ -41,3 +41,16 @@ docker-compose run web rake db:create
 docker-compose run web rake db:migrate
 ```
 
+# To run tests
+
+## Unit tests
+
+```sh
+docker-compose run web rspec spec/lib --order rand -fd
+```
+
+## Integrated tests
+
+```sh
+docker-compose run web rspec spec/gateways spec/presenters spec/controllers --order rand -fd
+```
